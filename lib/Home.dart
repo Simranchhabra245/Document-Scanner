@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:camera/camera.dart';
 import 'package:documentscanner2/Providers/documentProvider.dart';
 import 'package:documentscanner2/Search.dart';
+import 'package:documentscanner2/custom/custom_camera.dart';
 import 'package:documentscanner2/drawer.dart';
 import 'package:documentscanner2/pdfScreen.dart';
 import 'package:documentscanner2/showImage.dart';
@@ -10,11 +12,13 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'package:flutter_share/flutter_share.dart';
+import 'package:vector_math/vector_math_geometry.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_size_getter/image_size_getter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
-import 'package:image_size_getter/image_size_getter.dart';
+// import 'package:image_size_getter/image_size_getter.dart';
 import 'dart:io';
 
 import 'CreateFolderDialog.dart';
@@ -46,8 +50,7 @@ class _HomeState extends State<Home> {
     await _inFutureList().then((value) {
       setState(() {
         value.forEach((element) {
-          directoryItems.add(element.split("/")[
-              element.split("/").lastIndexOf(element, element.length - 1)]);
+          directoryItems.add(element);
         });
         // directoryItems = value;
       });
@@ -75,81 +78,18 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size - MediaQuery.of(context).size;
     return Scaffold(
-      drawer: Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Color(0xffF0F0F0),
-        ),
-        child: Container(
-          width: 220.2,
-          child: Drawer(
-            child: Column(
-              children: [
-                DocDrawer(),
-                Spacer(),
-                Text('App beta version 1.0.0',
-                    style: TextStyle(
-                        color: Colors.grey, fontStyle: FontStyle.italic)),
-                SizedBox(
-                  height: 10,
-                ),
-                Text(
-                  'Made in INDIA',
-                  style: TextStyle(color: Color(0xff002C10)),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      appBar: AppBar(
-        backgroundColor: Colors.green,
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.image_search,
-              color: Colors.white,
-            ),
-            onPressed: () async {
-              var status = await Permission.storage.status;
-              if (status.isGranted) {
-                var data = await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return CreateFolderDialog(
-                        title: "Custom Dialog Demo",
-                        descriptions:
-                            "Hii all this is a custom dialog in flutter and  you will be use in your flutter applications",
-                        text: "Create folder",
-                      );
-                    });
-                print("directory name: ${data}");
-                directoryItems.add(data);
-              } else {
-                Map<Permission, PermissionStatus> statuses = await [
-                  Permission.storage,
-                  Permission.camera,
-                ].request();
-                print(statuses[Permission.storage]);
-              }
+      // appBar: Provider.of<DocumentProvider>(context)
+      //     .allDocuments
+      //     .length >
+      // 1?buildAppBar()
+      // :PreferredSize(
+      //   preferredSize: Size(0.0,0.0),
+      //   child: Container(),
 
-              // chooseImage(ImageSource.gallery);
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.search,
-              color: Colors.white,
-            ),
-            onPressed: () async {
-              showSearch(context: context, delegate: Search());
-            },
-          ),
-        ],
-      ),
+      // ),
+      drawer: buildDrawer(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
           backgroundColor: Colors.green,
@@ -157,7 +97,13 @@ class _HomeState extends State<Home> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
           onPressed: () async {
             print('test');
+            // WidgetsFlutterBinding.ensureInitialized();
+
+            //     final cameras = await availableCameras();
+            //     final firstCamera = cameras.first;
+
             chooseImage(ImageSource.camera);
+            // Navigator.of(context).push(MaterialPageRoute(builder: (context)=>TakePictureScreen(camera: ,)));
           },
           label: Row(
             mainAxisSize: MainAxisSize.min,
@@ -195,73 +141,373 @@ class _HomeState extends State<Home> {
         future: getAllDocuments(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            // print("has not data");
+            print("has not data");
             return CircularProgressIndicator();
           }
           if (snapshot.hasError) {
-            // print("error");
+            print("error");
             return CircularProgressIndicator();
           }
+          print(
+              "snapshot.data snapshot.data:${Provider.of<DocumentProvider>(context).allDocuments.length}");
+          //  if ()
 
-          return Container(
-            padding: EdgeInsets.all(10),
-            child: Container(
-              child: Column(
-                children: [
-                  Container(
-                    // color: Colors.red,
-                    height: 25,
-                    width: MediaQuery.of(context).size.width,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Folder"),
-                        Container(
-                          // color:Colors.green,
-                          width: 60,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Sort"),
-                              // SizedBox(width:5),
-                              InkWell(onTap: () {}, child: Icon(Icons.sort))
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  createForlderView(context),
-                  Container(
-                    // color: Colors.red,
-                    height: 25,
-                    width: MediaQuery.of(context).size.width,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Folder"),
-                        Container(
-                          // color:Colors.green,
-                          width: 60,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Sort"),
-                              // SizedBox(width:5),
-                              InkWell(onTap: () {}, child: Icon(Icons.sort))
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _createGridView()
-                ],
+          return bodyWidgett();
+          // Provider.of<DocumentProvider>(context)
+          //                   .allDocuments
+          //                   .length >
+          //               1
+          //     ?
+          //  bodyWidgett()
+          // : Container(
+          //   height: MediaQuery.of(context).size.height,
+          //     alignment: Alignment.center,bodyWidgett()
+          //     child: Center(
+          //       child: Column(
+          //         mainAxisAlignment: MainAxisAlignment.center,
+          //         children: [
+          //           Image(
+          //             image: AssetImage('lib/Model/images/documents.png'),
+          //             color: Colors.green,
+          //           ),
+          //           Text("You do not have yet any",
+          //               style: TextStyle(
+          //                   fontSize: 14,
+          //                   color: Colors.grey,
+          //                   fontStyle: FontStyle.italic)),
+          //           Text("Scanned documents !!",
+          //               style: TextStyle(fontSize: 18, color: Colors.black))
+          //         ],
+          //       ),
+          //     ));
+        },
+      ),
+    );
+  }
+
+  bodyWidgett() {
+    return CustomScrollView(
+      slivers: <Widget>[
+        buildAppBarr(),
+        SliverToBoxAdapter(
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Folder",
+                    style: TextStyle(fontSize: 15, color: Colors.green)),
+                // Container(
+                //   width: 70,
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text("Sort",
+                //           style: TextStyle(fontSize: 15, color: Colors.green))
+                //         ,
+                //       // SizedBox(width:5),
+                //       InkWell(
+                //           onTap: () {},
+                //           child: Icon(
+                //             Icons.sort,
+                //             color: Colors.grey,
+                //           ))
+                //     ],
+                //   ),
+                // ),
+              ],
+            ),
+          ),
+        ),
+        SliverFixedExtentList(
+          itemExtent: 70.0,
+          delegate:
+              SliverChildBuilderDelegate((BuildContext context, int index) {
+            return Card(
+                child: ListTile(
+              leading: Container(
+                height: 30,
+                width: 30,
+                child: Icon(Icons.folder, color: Colors.brown),
               ),
+              title: Text(directoryItems[index]),
+              subtitle: Text("15 items"),
+              trailing:
+                  IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
+            ));
+          }, childCount: directoryItems.length),
+        ),
+        SliverToBoxAdapter(
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Folder",
+                    style: TextStyle(fontSize: 15, color: Colors.green)),
+                // Container(
+                //   width: 70,
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text("Sort",
+                //           style: TextStyle(fontSize: 15, color: Colors.green)),
+                //       // SizedBox(width:5),
+                //       InkWell(
+                //           onTap: () {},
+                //           child: Icon(
+                //             Icons.sort,
+                //             color: Colors.grey,
+                //           ))
+                //     ],
+                //   ),
+                // ),
+              ],
+            ),
+          ),
+        ),
+        gridList(),
+      ],
+    );
+  }
+
+  Widget gridList() {
+    var mSize = MediaQuery.of(context).size;
+
+    /*24 is for notification bar on Android*/
+    final double itemHeight = (mSize.height - kToolbarHeight) / 2;
+    final double itemWidth = mSize.width / 2;
+    int fileItemCount =
+        Provider.of<DocumentProvider>(context).allDocuments.length;
+
+    print(
+        "Count of list ${Provider.of<DocumentProvider>(context).allDocuments.length}");
+
+    int gridItemCount = 0;
+
+    if (fileItemCount > 1) {
+      gridItemCount = fileItemCount - 1;
+    } else {
+      gridItemCount = 0;
+    }
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 200.0,
+        mainAxisSpacing: 10.0,
+        crossAxisSpacing: 10.0,
+        childAspectRatio: 4.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return Center(
+            child: SelectCard(
+              index: index,
+              itemHeight: itemHeight,
+              itemWidth: itemWidth,
+              deletefun: () {
+                Navigator.pop(context);
+                DeleteDialog(
+                    index: index,
+                    dateTime:
+                        Provider.of<DocumentProvider>(context, listen: false)
+                            .allDocuments[index]
+                            .dateTime);
+              },
             ),
           );
         },
+        childCount: gridItemCount,
       ),
+    );
+  }
+
+  bodyWidget() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      child: Container(
+        child: Column(
+          children: [
+            Container(
+              // color: Colors.red,
+              height: 25,
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Folder"),
+                  Container(
+                    // color:Colors.green,
+                    width: 60,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Sort"),
+                        // SizedBox(width:5),
+                        InkWell(onTap: () {}, child: Icon(Icons.sort))
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            createForlderView(context),
+            Container(
+              // color: Colors.red,
+              height: 25,
+              width: MediaQuery.of(context).size.width,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Folder"),
+                  Container(
+                    // color:Colors.green,
+                    width: 60,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Sort"),
+                        // SizedBox(width:5),
+                        InkWell(onTap: () {}, child: Icon(Icons.sort))
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _createGridView()
+          ],
+        ),
+      ),
+    );
+  }
+
+  buildDrawer() {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        canvasColor: Color(0xffF0F0F0),
+      ),
+      child: Container(
+        width: 220.2,
+        child: Drawer(
+          child: Column(
+            children: [
+              DocDrawer(),
+              Spacer(),
+              Text('App beta version 1.0.0',
+                  style: TextStyle(
+                      color: Colors.grey, fontStyle: FontStyle.italic)),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                'Made in INDIA',
+                style: TextStyle(color: Color(0xff002C10)),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  buildAppBarr() {
+    return SliverAppBar(
+      key: animatedListKey,
+      pinned: true,
+      backgroundColor: Colors.green,
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            Icons.image_search,
+            color: Colors.white,
+          ),
+          onPressed: () async {
+            var status = await Permission.storage.status;
+            if (status.isGranted) {
+              var data = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return CreateFolderDialog(
+                      title: "Custom Dialog Demo",
+                      descriptions:
+                          "Hii all this is a custom dialog in flutter and  you will be use in your flutter applications",
+                      text: "Create folder",
+                    );
+                  });
+              print("directory name: ${data}");
+              directoryItems.add(data);
+            } else {
+              Map<Permission, PermissionStatus> statuses = await [
+                Permission.storage,
+                Permission.camera,
+              ].request();
+              print(statuses[Permission.storage]);
+            }
+
+            // chooseImage(ImageSource.gallery);
+          },
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.search,
+            color: Colors.white,
+          ),
+          onPressed: () async {
+            showSearch(context: context, delegate: Search());
+          },
+        ),
+      ],
+    );
+  }
+
+  buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.green,
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            Icons.image_search,
+            color: Colors.white,
+          ),
+          onPressed: () async {
+            var status = await Permission.storage.status;
+            if (status.isGranted) {
+              var data = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return CreateFolderDialog(
+                      title: "Custom Dialog Demo",
+                      descriptions:
+                          "Hii all this is a custom dialog in flutter and  you will be use in your flutter applications",
+                      text: "Create folder",
+                    );
+                  });
+              print("directory name: ${data}");
+              directoryItems.add(data);
+            } else {
+              Map<Permission, PermissionStatus> statuses = await [
+                Permission.storage,
+                Permission.camera,
+              ].request();
+              print(statuses[Permission.storage]);
+            }
+
+            // chooseImage(ImageSource.gallery);
+          },
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.search,
+            color: Colors.white,
+          ),
+          onPressed: () async {
+            showSearch(context: context, delegate: Search());
+          },
+        ),
+      ],
     );
   }
 
@@ -316,12 +562,18 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void chooseImage(ImageSource source) async {
-    File fileGallery = await ImagePicker.pickImage(source: source);
-    if (fileGallery != null) {
-      _file = fileGallery;
+  final picker = ImagePicker();
 
-      RenderBox imageBox = animatedListKey.currentContext.findRenderObject();
+  void chooseImage(ImageSource source) async {
+    var fileGallery = await picker.getImage(source: source, imageQuality: 85);
+    // pickImage(source: source);
+    if (fileGallery != null) {
+      _file = File(fileGallery.path);
+
+      RenderBox imageBox = context.findRenderObject();
+
+      // RenderBox imageBox = animatedListKey.currentContext.findRenderObject();
+
       width = imageBox.size.width;
       height = imageBox.size.height;
       imagePixelSize = ImageSizGetter.getSize(_file);
@@ -336,7 +588,7 @@ class _HomeState extends State<Home> {
             br: Offset(width - 20, height - 20),
             width: width,
             height: height,
-            file: fileGallery,
+            file: _file,
             imagePixelSize: imagePixelSize,
             animatedListKey: animatedListKey,
           ),
@@ -866,6 +1118,10 @@ class _HomeState extends State<Home> {
       subPath.create();
     }
   }
+
+  /**
+   * open floder 
+   */
 
   Widget createForlderView(BuildContext context) {
     final _width = MediaQuery.of(context).size.width;

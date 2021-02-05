@@ -186,13 +186,14 @@ class _ShowImageState extends State<ShowImage> {
   }
 
   Future<Null> _cropImage() async {
+  
     File croppedFile = await ImageCropper.cropImage(
         sourcePath: widget.file.path,
+    
         aspectRatioPresets: Platform.isAndroid
             ? [
                 CropAspectRatioPreset.square,
                 CropAspectRatioPreset.ratio3x2,
-                CropAspectRatioPreset.original,
                 CropAspectRatioPreset.ratio4x3,
                 CropAspectRatioPreset.ratio16x9
               ]
@@ -216,7 +217,10 @@ class _ShowImageState extends State<ShowImage> {
           title: 'Cropper',
         ));
     if (croppedFile != null) {
+      print("if condition");
       widget.file = croppedFile;
+    } else {
+      print("else condition");
     }
   }
 

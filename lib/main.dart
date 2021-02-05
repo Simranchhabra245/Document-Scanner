@@ -1,4 +1,5 @@
 import 'package:documentscanner2/Providers/documentProvider.dart';
+import 'package:documentscanner2/custom/test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,7 @@ class _MyAppState extends State<MyApp> {
     return ChangeNotifierProvider.value(
       value: DocumentProvider(),
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
             primarySwatch: Colors.green,
             primaryColor: Colors.green,
@@ -34,7 +36,9 @@ class _MyAppState extends State<MyApp> {
             textSelectionColor: Colors.blueGrey,
             floatingActionButtonTheme: FloatingActionButtonThemeData(
                 backgroundColor: ThemeData.dark().canvasColor)),
-        home: Splash(),
+        home:
+        // Test()
+         Splash(),
       ),
     );
   }
